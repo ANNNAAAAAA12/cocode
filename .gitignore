@@ -1,0 +1,8 @@
+node_modules/
+.env
+dist/
+.target/
+*.log
+.git/
+cocode-frontend/node_modules/
+cocode-ai-servicio/node_modules/

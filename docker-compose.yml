@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # --- CONTENEDOR 1: BASE DE DATOS PARA USUARIOS (MONGODB) ---
+  auth-db:
+    image: mongo:6.0
+    container_name: cocode_auth_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pair-network
+
+  # --- CONTENEDOR 2: AUTH SERVICE (Node.js + Conexión a Base de Datos) ---
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: cocode_auth
+    ports:
+      - "8001:8001"
+    depends_on:
+      - auth-db
+    environment:
+      - MONGO_URI=mongodb://auth-db:27017/cocode_usuarios
+    networks:
+      - pair-network
+
+  # --- CONTENEDOR 3: EDITOR SERVICE ---
+  editor-service:
+    build:
+      context: ./editor-service
+    container_name: cocode_editor
+    ports:
+      - "8002:8002"
+    networks:
+      - pair-network
+
+  # --- CONTENEDOR 4: AI SERVICE ---
+  ai-service:
+    build:
+      context: ./cocode-ai-servicio
+    container_name: cocode_ai_service
+    ports:
+      - "3000:3000"
+    networks:
+      - pair-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # --- CONTENEDOR 5: FRONTEND REACT ---
+  frontend:
+    build:
+      context: ./cocode-frontend
+    container_name: cocode_frontend_react
+    ports:
+      - "5173:5173"
+    depends_on:
+      - auth-service
+      - editor-service
+      - ai-service
+    networks:
+      - pair-network
+
+networks:
+  pair-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
